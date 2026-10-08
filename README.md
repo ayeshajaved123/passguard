@@ -1,8 +1,8 @@
-# 🛡️ PassGuard — Password Strength Checker & Generator
+# PassGuard — Password Strength Checker & Generator
 
 A single-page web app that analyzes password strength in real time and generates cryptographically secure passwords.
 
-## ✨ Features
+## Features
 - **Live strength meter** — entropy-based scoring (bits of entropy)
 - **Crack-time estimate** — shows approximate brute-force time
 - **Checklist feedback** — length, lowercase, uppercase, digits, symbols
@@ -10,11 +10,11 @@ A single-page web app that analyzes password strength in real time and generates
 - **Show/hide toggle** & one-click copy
 - **100% client-side** — nothing ever leaves the browser
 
-## 🛠️ Built With
+## Built With
 - HTML, CSS, JavaScript (no frameworks, no build step)
 
-## 🚀 Run
+## Run
 Open `index.html` in any browser.
 
-## 👩‍💻 Author
+## ‍ Author
 **Ayesha Javed** — BS Information Technology, Rawalpindi Women University
