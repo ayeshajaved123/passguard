@@ -6,150 +6,183 @@
 <title>PassGuard — Password Strength Checker & Generator</title>
 <style>
   :root{
-    --bg:#0b0f14; --card:#131a23; --border:#1f2a38;
-    --text:#e8eef4; --muted:#8b98a8;
-    --green:#2ecc71; --yellow:#f1c40f; --orange:#e67e22; --red:#e74c3c; --cyan:#22d3ee;
+    --bg:#f7f8fa; --card:#ffffff; --border:#e4e7ec;
+    --text:#1a2230; --muted:#667085; --accent:#0f766e;
+    --red:#d92d20; --orange:#dc6803; --yellow:#b54708; --green:#027a48;
   }
-  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
-  body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:40px 16px}
-  .wrap{width:100%;max-width:560px}
-  header{text-align:center;margin-bottom:28px}
-  header .logo{font-size:34px}
-  header h1{font-size:26px;margin:8px 0 4px}
-  header h1 span{color:var(--cyan)}
-  header p{color:var(--muted);font-size:14px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px}
-  .card h2{font-size:15px;margin-bottom:14px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-  .input-row{display:flex;gap:8px}
-  input[type=text],input[type=password]{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px 14px;font-size:16px;outline:none}
-  input:focus{border-color:var(--cyan)}
-  button{background:var(--cyan);color:#062a30;border:none;border-radius:8px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer}
-  button:hover{filter:brightness(1.1)}
-  button.ghost{background:transparent;color:var(--cyan);border:1px solid var(--cyan)}
-  .meter{height:10px;background:var(--bg);border-radius:6px;margin:16px 0 8px;overflow:hidden}
-  .meter>div{height:100%;width:0%;border-radius:6px;transition:width .3s,background .3s}
-  .verdict{font-size:18px;font-weight:700;margin-bottom:4px}
-  .crack{color:var(--muted);font-size:13px;margin-bottom:14px}
-  .checklist{list-style:none;font-size:14px}
-  .checklist li{padding:6px 0;color:var(--muted)}
-  .checklist li.ok{color:var(--green)}
-  .checklist li::before{content:"✕ ";color:var(--red)}
-  .checklist li.ok::before{content:"✓ "}
-  .opts{display:flex;flex-wrap:wrap;gap:12px;font-size:14px;color:var(--muted);margin-bottom:14px}
-  .opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
-  input[type=range]{width:100%;margin:6px 0 12px;accent-color:var(--cyan)}
-  .gen-out{background:var(--bg);border:1px dashed var(--border);border-radius:8px;padding:14px;font-family:monospace;font-size:16px;word-break:break-all;margin-bottom:12px;min-height:52px;color:var(--cyan)}
-  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:10px}
-  footer a{color:var(--cyan);text-decoration:none}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+  .page{max-width:640px;margin:0 auto;padding:56px 20px 64px}
+  header.top{margin-bottom:32px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:var(--accent);position:relative;flex:none}
+  .brand-mark::after{content:"";position:absolute;left:11px;top:7px;width:8px;height:14px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(42deg)}
+  .brand h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
+  header.top p{color:var(--muted);font-size:15px;max-width:480px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:20px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+  .card h2{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:18px}
+  .field{display:flex;gap:10px}
+  input[type=text],input[type=password]{flex:1;min-width:0;border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-size:15px;color:var(--text);background:#fff;outline:none}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+  .btn{border:none;border-radius:8px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;white-space:nowrap}
+  .btn:hover{background:#0d6a63}
+  .btn.secondary{background:#fff;color:var(--text);border:1px solid var(--border)}
+  .btn.secondary:hover{background:#f9fafb}
+  .segments{display:flex;gap:6px;margin:18px 0 10px}
+  .segments span{flex:1;height:8px;border-radius:4px;background:#eef0f4;transition:background .25s}
+  .verdict-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+  .verdict{font-size:17px;font-weight:700}
+  .entropy{font-size:13px;color:var(--muted)}
+  .crack{font-size:13px;color:var(--muted);margin-bottom:16px}
+  .checklist{list-style:none;border-top:1px solid var(--border);padding-top:8px}
+  .checklist li{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:14px;color:var(--muted)}
+  .check{width:18px;height:18px;border-radius:50%;border:1.5px solid #cfd4dc;flex:none;position:relative;transition:all .2s}
+  li.ok{color:var(--text)}
+  li.ok .check{background:var(--green);border-color:var(--green)}
+  li.ok .check::after{content:"";position:absolute;left:5.5px;top:2.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .row label{font-size:14px;color:var(--muted)}
+  .row label b{color:var(--text)}
+  input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 16px}
+  .toggles{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:13.5px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;color:var(--muted);user-select:none}
+  .toggle input{display:none}
+  .toggle.on{border-color:var(--accent);color:var(--text);background:rgba(15,118,110,.06)}
+  .toggle .box{width:15px;height:15px;border-radius:4px;border:1.5px solid #cfd4dc;position:relative;flex:none}
+  .toggle.on .box{background:var(--accent);border-color:var(--accent)}
+  .toggle.on .box::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+  .output{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:15px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;word-break:break-all;margin-bottom:14px;min-height:54px;color:var(--text)}
+  footer{margin-top:8px;text-align:center;color:var(--muted);font-size:13px}
+  footer a{color:var(--accent);text-decoration:none}
+  @media(max-width:520px){.page{padding:36px 16px 48px}.card{padding:22px 18px}.field{flex-direction:column}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="logo">🛡️</div>
-    <h1>Pass<span>Guard</span></h1>
-    <p>Check how strong your password is — then generate a better one.</p>
+<div class="page">
+  <header class="top">
+    <div class="brand"><div class="brand-mark"></div><h1>PassGuard</h1></div>
+    <p>Check the strength of any password, then generate one that's actually secure. Everything runs locally in your browser.</p>
   </header>
 
-  <div class="card">
-    <h2>Strength Checker</h2>
-    <div class="input-row">
-      <input type="password" id="pwd" placeholder="Type a password..." autocomplete="off">
-      <button class="ghost" id="toggle" title="Show / hide">👁</button>
+  <section class="card">
+    <h2>Strength checker</h2>
+    <div class="field">
+      <input type="password" id="pwd" placeholder="Enter a password to analyze" autocomplete="off" spellcheck="false">
+      <button class="btn secondary" id="toggle">Show</button>
     </div>
-    <div class="meter"><div id="bar"></div></div>
-    <div class="verdict" id="verdict">—</div>
-    <div class="crack" id="crack">Start typing to analyze.</div>
+    <div class="segments" id="segs"><span></span><span></span><span></span><span></span></div>
+    <div class="verdict-row">
+      <div class="verdict" id="verdict">No password entered</div>
+      <div class="entropy" id="entropy"></div>
+    </div>
+    <div class="crack" id="crack">Type a password above to see its estimated crack time.</div>
     <ul class="checklist" id="list">
-      <li data-k="len">At least 12 characters</li>
-      <li data-k="lower">Lowercase letter (a–z)</li>
-      <li data-k="upper">Uppercase letter (A–Z)</li>
-      <li data-k="digit">Number (0–9)</li>
-      <li data-k="sym">Symbol (!@#$…)</li>
+      <li data-k="len"><span class="check"></span>At least 12 characters</li>
+      <li data-k="lower"><span class="check"></span>Lowercase letter (a&ndash;z)</li>
+      <li data-k="upper"><span class="check"></span>Uppercase letter (A&ndash;Z)</li>
+      <li data-k="digit"><span class="check"></span>Number (0&ndash;9)</li>
+      <li data-k="sym"><span class="check"></span>Symbol (!@#$&hellip;)</li>
     </ul>
-  </div>
+  </section>
 
-  <div class="card">
-    <h2>Password Generator</h2>
-    <label style="font-size:14px;color:var(--muted)">Length: <b id="lenVal" style="color:var(--text)">16</b></label>
+  <section class="card">
+    <h2>Password generator</h2>
+    <div class="row"><label>Length</label><label><b id="lenVal">16</b> characters</label></div>
     <input type="range" id="len" min="8" max="64" value="16">
-    <div class="opts">
-      <label><input type="checkbox" id="oLower" checked> a–z</label>
-      <label><input type="checkbox" id="oUpper" checked> A–Z</label>
-      <label><input type="checkbox" id="oDigit" checked> 0–9</label>
-      <label><input type="checkbox" id="oSym" checked> Symbols</label>
+    <div class="toggles" id="toggles">
+      <label class="toggle on"><input type="checkbox" id="oLower" checked><span class="box"></span>Lowercase</label>
+      <label class="toggle on"><input type="checkbox" id="oUpper" checked><span class="box"></span>Uppercase</label>
+      <label class="toggle on"><input type="checkbox" id="oDigit" checked><span class="box"></span>Numbers</label>
+      <label class="toggle on"><input type="checkbox" id="oSym" checked><span class="box"></span>Symbols</label>
     </div>
-    <div class="gen-out" id="genOut">Press generate…</div>
-    <div class="input-row">
-      <button id="genBtn" style="flex:1">⚡ Generate</button>
-      <button class="ghost" id="copyBtn">📋 Copy</button>
+    <div class="output" id="genOut">&mdash;</div>
+    <div class="field">
+      <button class="btn" id="genBtn" style="flex:1">Generate password</button>
+      <button class="btn secondary" id="copyBtn">Copy</button>
     </div>
-  </div>
+  </section>
 
-  <footer>Built by <a href="https://github.com/ayeshajaved123">Ayesha Javed</a> · 100% client-side, nothing leaves your browser.</footer>
+  <footer>Built by <a href="https://github.com/ayeshajaved123">Ayesha Javed</a> &middot; 100% client-side, nothing leaves your browser.</footer>
 </div>
 
 <script>
-const pwd=document.getElementById('pwd'),bar=document.getElementById('bar'),
-      verdict=document.getElementById('verdict'),crack=document.getElementById('crack'),
-      items=[...document.querySelectorAll('#list li')];
+(function(){
+  var pwd=document.getElementById('pwd'),
+      segs=document.getElementById('segs').children,
+      verdict=document.getElementById('verdict'),
+      entropyEl=document.getElementById('entropy'),
+      crack=document.getElementById('crack'),
+      items=Array.prototype.slice.call(document.querySelectorAll('#list li')),
+      colors=['#d92d20','#dc6803','#b54708','#027a48'],
+      labels=['Weak','Fair','Good','Strong'];
 
-document.getElementById('toggle').onclick=()=>{pwd.type=pwd.type==='password'?'text':'password';};
+  document.getElementById('toggle').addEventListener('click',function(){
+    var show=pwd.type==='password';
+    pwd.type=show?'text':'password';
+    this.textContent=show?'Hide':'Show';
+  });
 
-function entropy(p){
-  let pool=0;
-  if(/[a-z]/.test(p))pool+=26;
-  if(/[A-Z]/.test(p))pool+=26;
-  if(/[0-9]/.test(p))pool+=10;
-  if(/[^a-zA-Z0-9]/.test(p))pool+=33;
-  return pool? p.length*Math.log2(pool):0;
-}
-function crackTime(e){
-  const perSec=1e10, secs=Math.pow(2,e)/perSec;
-  if(secs<1)return 'less than a second';
-  const u=[[31536000,'year'],[2592000,'month'],[86400,'day'],[3600,'hour'],[60,'minute']];
-  for(const[s,n]of u){if(secs>=s){const v=Math.floor(secs/s);return v.toLocaleString()+' '+n+(v>1?'s':'');}}
-  return Math.floor(secs)+' seconds';
-}
-pwd.addEventListener('input',()=>{
-  const p=pwd.value;
-  const checks={len:p.length>=12,lower:/[a-z]/.test(p),upper:/[A-Z]/.test(p),digit:/[0-9]/.test(p),sym:/[^a-zA-Z0-9]/.test(p)};
-  items.forEach(li=>li.classList.toggle('ok',!!checks[li.dataset.k]));
-  if(!p){bar.style.width='0%';verdict.textContent='—';verdict.style.color='';crack.textContent='Start typing to analyze.';return;}
-  const e=entropy(p),score=Math.min(100,Math.round(e/1.28));
-  bar.style.width=score+'%';
-  let v,c;
-  if(e<40){v='Weak 😟';c='var(--red)';}
-  else if(e<60){v='Fair 😐';c='var(--orange)';}
-  else if(e<80){v='Strong 🙂';c='var(--yellow)';}
-  else{v='Excellent 🔒';c='var(--green)';}
-  bar.style.background=c;verdict.textContent=v;verdict.style.color=c;
-  crack.textContent='≈ '+entropy(p).toFixed(1)+' bits of entropy · would take ~'+crackTime(e)+' to brute-force.';
-});
+  function entropy(p){
+    var pool=0;
+    if(/[a-z]/.test(p))pool+=26;
+    if(/[A-Z]/.test(p))pool+=26;
+    if(/[0-9]/.test(p))pool+=10;
+    if(/[^a-zA-Z0-9]/.test(p))pool+=33;
+    return pool?p.length*Math.log2(pool):0;
+  }
+  function crackTime(e){
+    var secs=Math.pow(2,e)/1e10;
+    if(secs<1)return 'less than a second';
+    var u=[[31536000,'year'],[2592000,'month'],[86400,'day'],[3600,'hour'],[60,'minute']];
+    for(var i=0;i<u.length;i++){
+      if(secs>=u[i][0]){var v=Math.floor(secs/u[i][0]);return v.toLocaleString()+' '+u[i][1]+(v>1?'s':'');}
+    }
+    return Math.floor(secs)+' seconds';
+  }
 
-// generator
-const len=document.getElementById('len'),lenVal=document.getElementById('lenVal'),genOut=document.getElementById('genOut');
-len.oninput=()=>lenVal.textContent=len.value;
-function gen(){
-  const L=+len.value;
-  let pool='';
-  if(document.getElementById('oLower').checked)pool+='abcdefghijklmnopqrstuvwxyz';
-  if(document.getElementById('oUpper').checked)pool+='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  if(document.getElementById('oDigit').checked)pool+='0123456789';
-  if(document.getElementById('oSym').checked)pool+='!@#$%^&*()-_=+[]{};:,.<>?';
-  if(!pool){genOut.textContent='Select at least one character set.';return;}
-  const arr=new Uint32Array(L);crypto.getRandomValues(arr);
-  genOut.textContent=[...arr].map(n=>pool[n%pool.length]).join('');
-}
-document.getElementById('genBtn').onclick=gen;
-document.getElementById('copyBtn').onclick=()=>{
-  const t=genOut.textContent;
-  if(!t||t.startsWith('Press')||t.startsWith('Select'))return;
-  navigator.clipboard.writeText(t);
-  document.getElementById('copyBtn').textContent='✅ Copied';
-  setTimeout(()=>document.getElementById('copyBtn').textContent='📋 Copy',1500);
-};
-gen();
+  pwd.addEventListener('input',function(){
+    var p=pwd.value;
+    var checks={len:p.length>=12,lower:/[a-z]/.test(p),upper:/[A-Z]/.test(p),digit:/[0-9]/.test(p),sym:/[^a-zA-Z0-9]/.test(p)};
+    items.forEach(function(li){li.classList.toggle('ok',!!checks[li.getAttribute('data-k')]);});
+    for(var i=0;i<4;i++)segs[i].style.background='#eef0f4';
+    if(!p){
+      verdict.textContent='No password entered';verdict.style.color='';
+      entropyEl.textContent='';crack.textContent='Type a password above to see its estimated crack time.';
+      return;
+    }
+    var e=entropy(p),lvl=e<40?0:e<60?1:e<80?2:3;
+    for(var j=0;j<=lvl;j++)segs[j].style.background=colors[lvl];
+    verdict.textContent=labels[lvl];verdict.style.color=colors[lvl];
+    entropyEl.textContent=e.toFixed(1)+' bits of entropy';
+    crack.textContent='Estimated time to brute-force: '+crackTime(e)+' (at 10 billion guesses/sec).';
+  });
+
+  var len=document.getElementById('len'),lenVal=document.getElementById('lenVal'),genOut=document.getElementById('genOut');
+  len.addEventListener('input',function(){lenVal.textContent=len.value;});
+  document.getElementById('toggles').addEventListener('change',function(ev){
+    var t=ev.target.closest('.toggle');if(t)t.classList.toggle('on',ev.target.checked);
+  });
+  function gen(){
+    var L=+len.value,pool='';
+    if(document.getElementById('oLower').checked)pool+='abcdefghijklmnopqrstuvwxyz';
+    if(document.getElementById('oUpper').checked)pool+='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if(document.getElementById('oDigit').checked)pool+='0123456789';
+    if(document.getElementById('oSym').checked)pool+='!@#$%^&*()-_=+[]{};:,.<>?';
+    if(!pool){genOut.textContent='Select at least one character set.';return;}
+    var arr=new Uint32Array(L);crypto.getRandomValues(arr),out='';
+    for(var i=0;i<L;i++)out+=pool[arr[i]%pool.length];
+    genOut.textContent=out;
+  }
+  document.getElementById('genBtn').addEventListener('click',gen);
+  document.getElementById('copyBtn').addEventListener('click',function(){
+    var t=genOut.textContent;
+    if(!t||t.charAt(0)==='\u2014'||t.indexOf('Select')===0)return;
+    navigator.clipboard.writeText(t);
+    var b=this;b.textContent='Copied';
+    setTimeout(function(){b.textContent='Copy';},1500);
+  });
+  gen();
+})();
 </script>
 </body>
 </html>
