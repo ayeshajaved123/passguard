@@ -3,171 +3,275 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>passguard ~/security</title>
+<title>PassGuard — Password Strength Checker & Generator</title>
 <style>
   :root{
-    --bg:#070907;
-    --panel:#0b0e0b;
-    --green:#33ff66;
-    --dim:#1f7a38;
-    --faint:#14532a;
-    --red:#ff5555;
-    --amber:#ffb86c;
+    --bg:#04080a;
+    --panel:#081114;
+    --panel2:#0a1518;
+    --line:rgba(45,212,191,.28);
+    --line-soft:rgba(45,212,191,.14);
+    --teal:#2dd4bf;
+    --teal-bright:#5eead4;
+    --text:#e9f7f5;
+    --muted:#6f8f8d;
+    --faint:#3d5a58;
+    --red:#fb4d6d;
+    --amber:#fbbf24;
+    --green:#34d399;
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%}
   body{
-    background:var(--bg);color:var(--green);
+    background:var(--bg);color:var(--text);
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-    font-size:15px;line-height:1.7;
     min-height:100vh;display:flex;justify-content:center;
-    padding:40px 16px 60px;
-    text-shadow:0 0 6px rgba(51,255,102,.35);
+    padding:28px 18px 40px;font-size:14px;
   }
-  body::after{ /* subtle scanlines */
-    content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
-    background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(45,212,191,.06),transparent 70%);
   }
-  body::before{ /* vignette */
-    content:"";position:fixed;inset:0;pointer-events:none;z-index:51;
-    background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.5) 100%);
+  .app{width:100%;max-width:1180px;position:relative;z-index:1}
+  /* ---------- top HUD bar ---------- */
+  .hud{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;margin-bottom:26px;position:relative}
+  .hud::before,.hud::after{content:"";position:absolute;top:0;bottom:0;width:34px;border:1px solid var(--line)}
+  .hud::before{left:0;border-right:none;border-radius:8px 0 0 8px}
+  .hud::after{right:0;border-left:none;border-radius:0 8px 8px 0}
+  .hud .left{padding-left:48px;color:var(--teal);font-weight:700;letter-spacing:.5px}
+  .hud .left .p{color:var(--teal-bright)}
+  .hud .right{padding-right:48px;color:var(--muted);font-size:12.5px;letter-spacing:1px;display:flex;align-items:center;gap:12px}
+  .dots{display:flex;gap:6px}
+  .dots span{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
+  /* ---------- header ---------- */
+  .brand{text-align:center;margin-bottom:30px}
+  .brand .row{display:flex;align-items:center;justify-content:center;gap:16px}
+  .brand h1{font-size:44px;font-weight:800;letter-spacing:1px}
+  .brand h1 .w{color:#fff}.brand h1 .t{color:var(--teal)}
+  .brand p{color:var(--teal);letter-spacing:4px;font-size:13px;margin-top:6px}
+  .shield{filter:drop-shadow(0 0 10px rgba(45,212,191,.6))}
+  /* ---------- layout ---------- */
+  .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:20px;align-items:start}
+  .panel{
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:12px;padding:22px;
+    box-shadow:0 0 24px rgba(45,212,191,.06),inset 0 0 30px rgba(45,212,191,.03);
+    margin-bottom:20px;position:relative;
   }
-  .term{width:100%;max-width:720px}
-  .win{background:var(--panel);border:1px solid var(--faint);border-radius:10px;overflow:hidden;box-shadow:0 0 40px rgba(51,255,102,.07)}
-  .titlebar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--faint);background:#0d100d}
-  .dot{width:11px;height:11px;border-radius:50%}
-  .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
-  .titlebar .t{margin-left:8px;color:var(--dim);font-size:13px}
-  .screen{padding:22px 22px 28px;min-height:420px}
-  .line{white-space:pre-wrap;word-break:break-word;min-height:1.7em}
-  .dim{color:var(--dim)} .faint{color:var(--faint)}
-  .ok{color:var(--green)} .warn{color:var(--amber)} .bad{color:var(--red)}
-  .prompt{color:var(--green)}
-  .prompt .user{color:var(--amber)}
-  .cursor{display:inline-block;width:9px;height:17px;background:var(--green);vertical-align:-3px;animation:blink 1s steps(1) infinite;box-shadow:0 0 8px rgba(51,255,102,.8)}
-  @keyframes blink{50%{opacity:0}}
-  .cmdline{display:flex;align-items:center;gap:8px;margin:6px 0}
-  .cmdline input{
-    flex:1;min-width:0;background:transparent;border:none;outline:none;
-    color:var(--green);font:inherit;caret-color:var(--green);
-    text-shadow:0 0 6px rgba(51,255,102,.35);
+  .panel::before{content:"";position:absolute;top:-1px;left:24px;right:24px;height:1px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:.7}
+  .ptitle{display:flex;align-items:center;gap:10px;color:var(--teal);font-weight:700;letter-spacing:1.5px;font-size:14px;margin-bottom:6px}
+  .psub{color:var(--muted);font-size:13px;margin-bottom:14px}
+  /* ---------- input row ---------- */
+  .inrow{display:flex;align-items:center;gap:12px;background:rgba(45,212,191,.05);border:1px solid var(--line);border-radius:10px;padding:6px 8px 6px 16px}
+  .inrow input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font:inherit;font-size:15px;padding:10px 0}
+  .inrow input::placeholder{color:var(--faint)}
+  .iconbtn{background:transparent;border:none;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;padding:8px;border-radius:8px}
+  .iconbtn:hover{color:var(--teal);background:rgba(45,212,191,.08)}
+  .vdiv{width:1px;height:26px;background:var(--line-soft)}
+  /* ---------- strength ---------- */
+  .strgrid{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+  .gauge{position:relative;width:148px;height:148px;flex:none}
+  .gauge svg{transform:rotate(-90deg)}
+  .gauge .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .gauge .bits{font-size:34px;font-weight:800;color:var(--text);line-height:1}
+  .gauge .blabel{font-size:12px;color:var(--teal);letter-spacing:2px;margin-top:2px}
+  .gauge .elabel{font-size:10px;color:var(--faint);letter-spacing:2px}
+  .slabel{font-size:12px;color:var(--teal);letter-spacing:2px;margin-bottom:2px}
+  .verdict{font-size:21px;font-weight:800;margin-bottom:10px}
+  .segs{display:flex;gap:5px;margin-bottom:16px}
+  .segs span{flex:1;height:7px;border-radius:4px;background:rgba(45,212,191,.12)}
+  .crackrow{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line-soft);padding-top:14px}
+  .crackrow .clabel{font-size:11.5px;color:var(--teal);letter-spacing:1.5px}
+  .crackrow .cval{font-size:16px;font-weight:700;color:var(--text)}
+  /* ---------- checklist ---------- */
+  .checklist{list-style:none;margin-top:6px}
+  .checklist li{display:flex;align-items:center;gap:14px;padding:9px 0;font-size:14px;color:var(--muted)}
+  .checklist li .c{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--faint);flex:none;position:relative;transition:all .2s}
+  .checklist li.met{color:var(--text)}
+  .checklist li.met .c{background:var(--teal);border-color:var(--teal);box-shadow:0 0 10px rgba(45,212,191,.6)}
+  .checklist li.met .c::after{content:"";position:absolute;left:7px;top:3.5px;width:5px;height:10px;border:solid #04211d;border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+  /* ---------- generator ---------- */
+  .lenrow{display:flex;align-items:center;gap:16px;margin:8px 0 4px}
+  .lenbox{border:1px solid var(--line);border-radius:8px;padding:8px 0;width:64px;text-align:center;font-size:17px;font-weight:700;color:var(--text);background:rgba(45,212,191,.05)}
+  input[type=range]{flex:1;accent-color:var(--teal);height:6px;cursor:pointer}
+  .range-end{color:var(--muted);font-size:13px;white-space:nowrap}
+  .setslabel{font-size:12px;color:var(--teal);letter-spacing:2px;margin:16px 0 10px}
+  .sets{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .set{display:flex;align-items:center;gap:12px;border:1px solid var(--line-soft);border-radius:9px;padding:11px 14px;cursor:pointer;font-size:13.5px;color:var(--muted);transition:all .15s;user-select:none}
+  .set input{display:none}
+  .set .box{width:20px;height:20px;border-radius:6px;background:var(--teal);position:relative;flex:none;box-shadow:0 0 8px rgba(45,212,191,.5)}
+  .set .box::after{content:"";position:absolute;left:6.5px;top:2.5px;width:5px;height:10px;border:solid #04211d;border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+  .set.off{opacity:.45}
+  .set.off .box{background:transparent;border:1.5px solid var(--faint);box-shadow:none}
+  .set.off .box::after{display:none}
+  .genbtn{
+    width:100%;margin:18px 0 14px;padding:16px;border:none;border-radius:10px;cursor:pointer;
+    font:inherit;font-size:16px;font-weight:800;letter-spacing:2px;color:#04211d;
+    background:linear-gradient(180deg,var(--teal-bright),var(--teal));
+    box-shadow:0 0 24px rgba(45,212,191,.45);
+    display:flex;align-items:center;justify-content:center;gap:12px;
   }
-  .cmdline input::placeholder{color:var(--faint)}
-  .bar{letter-spacing:2px}
-  .section{margin-top:26px;padding-top:18px;border-top:1px dashed var(--faint)}
-  .btnrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
-  button{
-    font:inherit;background:transparent;color:var(--green);
-    border:1px solid var(--dim);border-radius:6px;padding:8px 18px;cursor:pointer;
-    text-shadow:0 0 6px rgba(51,255,102,.35);
+  .genbtn:hover{filter:brightness(1.08)}
+  .genbtn:active{transform:translateY(1px)}
+  .outrow{display:flex;gap:10px;align-items:stretch}
+  .out{
+    flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:13px 16px;
+    font-size:16px;color:var(--teal-bright);background:rgba(45,212,191,.04);
+    word-break:break-all;display:flex;align-items:center;text-shadow:0 0 8px rgba(45,212,191,.4);
   }
-  button:hover{background:rgba(51,255,102,.1);border-color:var(--green)}
-  button:active{transform:translateY(1px)}
-  .opts{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;font-size:14px;color:var(--dim)}
-  .opts label{cursor:pointer;display:flex;align-items:center;gap:6px}
-  .opts label.on{color:var(--green)}
-  .opts input{accent-color:var(--green)}
-  input[type=range]{width:100%;accent-color:var(--green);margin:4px 0 6px;background:transparent}
-  .genout{
-    border:1px solid var(--faint);border-radius:6px;padding:12px 14px;margin:10px 0;
-    word-break:break-all;min-height:52px;color:var(--green);background:#080a08;
-  }
-  .sig{margin-top:26px;color:var(--faint);font-size:13px}
-  .sig a{color:var(--dim);text-decoration:none}
-  .sig a:hover{color:var(--green)}
-  .hidden{display:none}
-  @media(max-width:560px){body{font-size:13.5px;padding:24px 10px 40px}.screen{padding:16px}}
+  .sqbtn{border:1px solid var(--line);background:transparent;border-radius:9px;color:var(--muted);cursor:pointer;padding:0 14px;display:flex;align-items:center}
+  .sqbtn:hover{color:var(--teal);border-color:var(--teal)}
+  .note{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12.5px;color:var(--muted)}
+  /* ---------- footer ---------- */
+  .foot{margin-top:8px;padding:14px 4px;color:var(--faint);font-size:12.5px;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;position:relative}
+  .foot::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+  .foot .r{color:var(--faint);letter-spacing:4px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}.brand h1{font-size:34px}}
 </style>
 </head>
 <body>
-<div class="term">
-  <div class="win">
-    <div class="titlebar">
-      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-      <span class="t">root@passguard: ~/security</span>
+<div class="app">
+
+  <div class="hud">
+    <div class="left"><span class="p">&gt;_</span>&nbsp; PassGuard.exe</div>
+    <div class="right">[ 100% CLIENT-SIDE ] <span class="dots"><span></span><span></span><span></span></span></div>
+  </div>
+
+  <div class="brand">
+    <div class="row">
+      <svg class="shield" width="58" height="58" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="1.6">
+        <path d="M12 2l8 3.5v5.2c0 5-3.4 9.3-8 10.8-4.6-1.5-8-5.8-8-10.8V5.5L12 2z"/>
+        <rect x="10.4" y="10.5" width="3.2" height="4.4" rx="1" fill="#2dd4bf" stroke="none"/>
+        <path d="M8.8 10.5V8.8a3.2 3.2 0 0 1 6.4 0v1.7" stroke="#2dd4bf"/>
+      </svg>
+      <h1><span class="w">Pass</span><span class="t">Guard</span></h1>
     </div>
-    <div class="screen" id="screen">
-      <div id="boot"></div>
+    <p>STRONGER PASSWORDS. SAFER YOU.</p>
+  </div>
 
-      <div class="section" id="sec-check" style="border-top:none;margin-top:8px;padding-top:0">
-        <div class="line"><span class="prompt"><span class="user">root@passguard</span>:~$</span> <span id="typed-cmd"></span><span class="cursor" id="cmd-cursor"></span></div>
-        <div id="analysis" class="hidden">
-          <div class="cmdline">
-            <span class="prompt">&gt;</span>
-            <input type="password" id="pwd" placeholder="type password to analyze..." autocomplete="off" spellcheck="false">
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <div class="inrow">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="1.8"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></svg>
+          <input type="password" id="pwd" placeholder="Enter your password here..." autocomplete="off" spellcheck="false">
+          <button class="iconbtn" id="togglePwd" title="Show / hide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
+          </button>
+          <div class="vdiv"></div>
+          <button class="iconbtn" id="clearPwd" title="Clear">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="strgrid">
+          <div class="gauge">
+            <svg width="148" height="148" viewBox="0 0 148 148">
+              <circle cx="74" cy="74" r="62" fill="none" stroke="rgba(45,212,191,.12)" stroke-width="9"
+                      stroke-dasharray="6 7" stroke-linecap="round"/>
+              <circle id="gArc" cx="74" cy="74" r="62" fill="none" stroke="#2dd4bf" stroke-width="9"
+                      stroke-linecap="round" stroke-dasharray="389.5" stroke-dashoffset="389.5"
+                      style="transition:stroke-dashoffset .5s ease,stroke .3s;filter:drop-shadow(0 0 6px rgba(45,212,191,.7))"/>
+            </svg>
+            <div class="center">
+              <div class="bits" id="bits">0</div>
+              <div class="blabel">bits</div>
+              <div class="elabel">ENTROPY</div>
+            </div>
           </div>
-          <div id="results"></div>
+          <div>
+            <div class="slabel">STRENGTH</div>
+            <div class="verdict" id="verdict" style="color:var(--muted)">—</div>
+            <div class="segs" id="segs"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="crackrow">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+              <div>
+                <div class="clabel">CRACK TIME (APPROX.)</div>
+                <div class="cval" id="crack">—</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="section hidden" id="sec-gen">
-        <div class="line"><span class="prompt"><span class="user">root@passguard</span>:~$</span> generate --secure</div>
-        <div class="line dim">length: <span class="ok" id="lenVal">16</span> <input type="range" id="len" min="8" max="64" value="16" style="width:180px;vertical-align:middle"></div>
-        <div class="opts" id="toggles">
-          <label class="on"><input type="checkbox" id="oLower" checked> [a-z]</label>
-          <label class="on"><input type="checkbox" id="oUpper" checked> [A-Z]</label>
-          <label class="on"><input type="checkbox" id="oDigit" checked> [0-9]</label>
-          <label class="on"><input type="checkbox" id="oSym" checked> [symbols]</label>
+      <div class="panel">
+        <div class="ptitle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>
+          CHECKLIST
         </div>
-        <div class="genout" id="genOut">press [GENERATE]...</div>
-        <div class="btnrow">
-          <button id="genBtn">[ GENERATE ]</button>
-          <button id="copyBtn">[ COPY ]</button>
+        <ul class="checklist" id="list">
+          <li data-k="len"><span class="c"></span>At least 12 characters</li>
+          <li data-k="lower"><span class="c"></span>Contains lowercase (a-z)</li>
+          <li data-k="upper"><span class="c"></span>Contains uppercase (A-Z)</li>
+          <li data-k="digit"><span class="c"></span>Contains digits (0-9)</li>
+          <li data-k="sym"><span class="c"></span>Contains symbols (!@#...)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="ptitle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.14-1.4l2-1.55-2-3.46-2.36.95a7 7 0 0 0-2.42-1.4L13.7 2.6h-3.4l-.38 2.54a7 7 0 0 0-2.42 1.4l-2.36-.95-2 3.46 2 1.55a7 7 0 0 0 0 2.8l-2 1.55 2 3.46 2.36-.95a7 7 0 0 0 2.42 1.4l.38 2.54h3.4l.38-2.54a7 7 0 0 0 2.42-1.4l2.36.95 2-3.46-2-1.55c.1-.46.14-.92.14-1.4z"/></svg>
+          PASSWORD GENERATOR
+        </div>
+        <div class="psub">Create a strong, random password using secure cryptography.</div>
+        <div class="slabel" style="margin-bottom:8px">LENGTH</div>
+        <div class="lenrow">
+          <div class="lenbox" id="lenVal">16</div>
+          <input type="range" id="len" min="8" max="64" value="16">
+          <div class="range-end">8 - 64</div>
+        </div>
+        <div class="setslabel">CHARACTER SETS</div>
+        <div class="sets" id="toggles">
+          <label class="set"><input type="checkbox" id="oLower" checked><span class="box"></span>Lowercase (a-z)</label>
+          <label class="set"><input type="checkbox" id="oUpper" checked><span class="box"></span>Uppercase (A-Z)</label>
+          <label class="set"><input type="checkbox" id="oDigit" checked><span class="box"></span>Digits (0-9)</label>
+          <label class="set"><input type="checkbox" id="oSym" checked><span class="box"></span>Symbols (!@#...)</label>
+        </div>
+        <button class="genbtn" id="genBtn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#04211d" stroke-width="2"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="#04211d"/><circle cx="15.5" cy="15.5" r="1.3" fill="#04211d"/><circle cx="15.5" cy="8.5" r="1.3" fill="#04211d"/><circle cx="8.5" cy="15.5" r="1.3" fill="#04211d"/></svg>
+          GENERATE PASSWORD
+          <span>&gt;&gt;</span>
+        </button>
+        <div class="outrow">
+          <div class="out" id="genOut">—</div>
+          <button class="sqbtn" id="toggleGen" title="Show / hide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
+          </button>
+          <button class="sqbtn" id="copyBtn" title="Copy">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/><path d="M15.5 5.5v-1a2 2 0 0 0-2-2h-9a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h1"/></svg>
+          </button>
+        </div>
+        <div class="note">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.4"><path d="M4.5 12.5l5 5 10-11"/></svg>
+          Generated using crypto.getRandomValues()
         </div>
       </div>
-
-      <div class="sig">passguard v1.0 &mdash; 100% client-side &middot; nothing leaves this terminal &middot; built by <a href="https://github.com/ayeshajaved123">ayesha</a></div>
     </div>
   </div>
+
+  <div class="foot">
+    <div><span style="color:var(--teal)">&lt;/&gt;</span>&nbsp;&nbsp;100% Client-Side&nbsp;&nbsp;|&nbsp;&nbsp;Nothing leaves your browser</div>
+    <div class="r">— — —</div>
+  </div>
+
 </div>
 
 <script>
 (function(){
   "use strict";
-  var boot=document.getElementById('boot'),
-      typedCmd=document.getElementById('typed-cmd'),
-      cmdCursor=document.getElementById('cmd-cursor'),
-      analysis=document.getElementById('analysis'),
-      secGen=document.getElementById('sec-gen'),
-      results=document.getElementById('results'),
-      pwd=document.getElementById('pwd');
+  var pwd=document.getElementById('pwd'),
+      bits=document.getElementById('bits'),
+      gArc=document.getElementById('gArc'),
+      verdict=document.getElementById('verdict'),
+      segs=document.getElementById('segs').children,
+      crack=document.getElementById('crack'),
+      items=Array.prototype.slice.call(document.querySelectorAll('#list li')),
+      CIRC=389.5;
 
-  function line(html,cls){
-    var d=document.createElement('div');
-    d.className='line '+(cls||'');
-    d.innerHTML=html;
-    boot.appendChild(d);
-    return d;
-  }
-  function typeInto(el,text,speed,done){
-    var i=0;
-    (function tick(){
-      el.textContent=text.slice(0,++i);
-      if(i<text.length)setTimeout(tick,speed);
-      else if(done)done();
-    })();
-  }
-
-  var bootLines=[
-    ['<span class="dim">[+]</span> loading crypto module ............ <span class="ok">OK</span>',300],
-    ['<span class="dim">[+]</span> loading entropy engine ........... <span class="ok">OK</span>',300],
-    ['<span class="dim">[+]</span> secure session established',500],
-    ['<span class="faint">-- password strength analyzer ready --</span>',400]
-  ];
-  var bi=0;
-  (function nextBoot(){
-    if(bi<bootLines.length){
-      line(bootLines[bi][0]);
-      setTimeout(nextBoot,bootLines[bi][1]);bi++;
-    }else{
-      typeInto(typedCmd,'analyze --password',45,function(){
-        cmdCursor.style.display='none';
-        analysis.classList.remove('hidden');
-        secGen.classList.remove('hidden');
-        pwd.focus();
-      });
-    }
-  })();
+  var genHidden=false, genValue='';
 
   function entropy(p){
     var pool=0;
@@ -179,54 +283,49 @@
   }
   function crackTime(e){
     var s=Math.pow(2,e)/1e10;
-    if(s<1)return 'less than a second';
+    if(s<1)return 'Instant';
     var u=[[31536000,'year'],[2592000,'month'],[86400,'day'],[3600,'hour'],[60,'minute']];
     for(var i=0;i<u.length;i++)if(s>=u[i][0]){var v=Math.floor(s/u[i][0]);return v.toLocaleString()+' '+u[i][1]+(v>1?'s':'');}
     return Math.floor(s)+' seconds';
   }
-  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-  var timer=null;
   pwd.addEventListener('input',function(){
-    clearTimeout(timer);
-    timer=setTimeout(function(){scan(pwd.value);},450);
+    var p=pwd.value;
+    var checks={len:p.length>=12,lower:/[a-z]/.test(p),upper:/[A-Z]/.test(p),digit:/[0-9]/.test(p),sym:/[^a-zA-Z0-9]/.test(p)};
+    items.forEach(function(li){li.classList.toggle('met',!!checks[li.getAttribute('data-k')]);});
+    if(!p){
+      bits.textContent='0';gArc.style.strokeDashoffset=CIRC;gArc.setAttribute('stroke','#2dd4bf');
+      verdict.textContent='—';verdict.style.color='var(--muted)';crack.textContent='—';
+      for(var i=0;i<8;i++){segs[i].style.background='rgba(45,212,191,.12)';segs[i].style.boxShadow='none';}
+      return;
+    }
+    var e=entropy(p),lvl=e<28?0:e<45?1:e<65?2:e<90?3:4,
+        words=['Very Weak','Weak','Fair','Strong','Very Strong'],
+        cols=['#fb4d6d','#fb7185','#fbbf24','#34d399','#2dd4bf'];
+    bits.textContent=Math.round(e);
+    gArc.style.strokeDashoffset=CIRC*(1-Math.min(e,128)/128);
+    gArc.setAttribute('stroke',cols[lvl]);
+    verdict.textContent=words[lvl];verdict.style.color=cols[lvl];
+    crack.textContent=crackTime(e);
+    var on=Math.round((lvl+1)*1.6);
+    for(var j=0;j<8;j++){
+      segs[j].style.background=j<on?cols[lvl]:'rgba(45,212,191,.12)';
+      segs[j].style.boxShadow=j<on?('0 0 6px '+cols[lvl]):'none';
+    }
   });
 
-  function scan(p){
-    results.innerHTML='';
-    if(!p)return;
-    var checks=[
-      ['len',p.length>=12,'length >= 12 ('+p.length+' chars)'],
-      ['lower',/[a-z]/.test(p),'lowercase [a-z]'],
-      ['upper',/[A-Z]/.test(p),'uppercase [A-Z]'],
-      ['digit',/[0-9]/.test(p),'digits [0-9]'],
-      ['sym',/[^a-zA-Z0-9]/.test(p),'symbols']
-    ];
-    var seq=[['<span class="dim">[*]</span> scanning character sets...',150]];
-    checks.forEach(function(c){
-      seq.push(['&nbsp;&nbsp;'+(c[1]?'<span class="ok">[+]</span> ':'<span class="faint">[ ]</span> ')+esc(c[2]),120]);
-    });
-    var e=entropy(p),lvl=e<40?0:e<60?1:e<80?2:3,
-        words=['WEAK','FAIR','GOOD','STRONG'],cls=['bad','warn','warn','ok'],
-        filled=Math.round((lvl+1)*2.5),bar='';
-    for(var i=0;i<10;i++)bar+=i<filled?'\u2588':'\u2591';
-    seq.push(['<span class="dim">[*]</span> entropy: <span class="ok">'+e.toFixed(1)+' bits</span>',150]);
-    seq.push(['<span class="dim">[*]</span> brute-force time: <span class="ok">'+crackTime(e)+'</span>',150]);
-    seq.push(['<span class="dim">STRENGTH:</span> <span class="bar '+cls[lvl]+'">'+bar+'</span> <span class="'+cls[lvl]+'">'+words[lvl]+'</span>',0]);
-    var si=0;
-    (function next(){
-      if(si<seq.length){
-        var d=document.createElement('div');d.className='line';d.innerHTML=seq[si][0];
-        results.appendChild(d);
-        si++;setTimeout(next,seq[si-1][1]);
-      }
-    })();
-  }
+  document.getElementById('togglePwd').addEventListener('click',function(){
+    pwd.type=pwd.type==='password'?'text':'password';pwd.focus();
+  });
+  document.getElementById('clearPwd').addEventListener('click',function(){
+    pwd.value='';pwd.dispatchEvent(new Event('input'));pwd.focus();
+  });
 
-  var len=document.getElementById('len'),lenVal=document.getElementById('lenVal'),genOut=document.getElementById('genOut');
+  var len=document.getElementById('len'),lenVal=document.getElementById('lenVal'),
+      genOut=document.getElementById('genOut');
   len.addEventListener('input',function(){lenVal.textContent=len.value;});
   document.getElementById('toggles').addEventListener('change',function(ev){
-    var t=ev.target.closest('label');if(t)t.classList.toggle('on',ev.target.checked);
+    var t=ev.target.closest('.set');if(t)t.classList.toggle('off',!ev.target.checked);
   });
   function gen(){
     var L=+len.value,pool='';
@@ -234,25 +333,34 @@
     if(document.getElementById('oUpper').checked)pool+='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     if(document.getElementById('oDigit').checked)pool+='0123456789';
     if(document.getElementById('oSym').checked)pool+='!@#$%^&*()-_=+[]{};:,.<>?';
-    if(!pool){genOut.textContent='ERR: select at least one character set.';return;}
+    if(!pool){genOut.textContent='ERR: select a character set';genValue='';return;}
     var arr=new Uint32Array(L),out='';
     crypto.getRandomValues(arr);
     for(var i=0;i<L;i++)out+=pool[arr[i]%pool.length];
-    genOut.textContent='';
-    var j=0;
-    (function tick(){
-      genOut.textContent=out.slice(0,++j);
-      if(j<out.length)setTimeout(tick,18);
+    genValue=out;genHidden=false;
+    var j=0,chars='!@#$%^&*()_+-=[]{}|;:,.<>?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    (function scramble(){
+      if(j<L){
+        var s=out.slice(0,j);
+        for(var k=j;k<L;k++)s+=chars[Math.floor(Math.random()*chars.length)];
+        genOut.textContent=s;j+=2;setTimeout(scramble,24);
+      }else genOut.textContent=out;
     })();
   }
   document.getElementById('genBtn').addEventListener('click',gen);
-  document.getElementById('copyBtn').addEventListener('click',function(){
-    var t=genOut.textContent;
-    if(!t||t.indexOf('press')===0||t.indexOf('ERR')===0)return;
-    navigator.clipboard.writeText(t);
-    var b=this;b.textContent='[ COPIED ]';
-    setTimeout(function(){b.textContent='[ COPY ]';},1500);
+  document.getElementById('toggleGen').addEventListener('click',function(){
+    if(!genValue)return;
+    genHidden=!genHidden;
+    genOut.textContent=genHidden?genValue.replace(/./g,'•'):genValue;
   });
+  document.getElementById('copyBtn').addEventListener('click',function(){
+    if(!genValue)return;
+    navigator.clipboard.writeText(genValue);
+    var b=this,old=b.innerHTML;
+    b.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2.2"><path d="M4.5 12.5l5 5 10-11"/></svg>';
+    setTimeout(function(){b.innerHTML=old;},1400);
+  });
+  gen();
 })();
 </script>
 </body>
